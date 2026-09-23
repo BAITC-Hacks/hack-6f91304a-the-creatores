@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
+  <title>ЗакупAI — Управление закупками</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#dashboard">К содержимому</a>
+  <aside class="sidebar">
+    <a class="brand" href="#dashboard"><span class="brand-icon">З</span>Закуп<span>AI</span></a>
+    <div class="workspace"><span class="workspace-icon">ЗК</span><div>Рабочее пространство<small>Управление закупками</small></div></div>
+    <p class="nav-label">РАБОЧАЯ ПАНЕЛЬ</p>
+    <nav aria-label="Основная навигация">
+      <a class="nav-link active" href="#dashboard" aria-current="location"><span aria-hidden="true">▦</span>Dashboard</a>
+      <a class="nav-link" href="#upload"><span aria-hidden="true">↥</span>Загрузка данных</a>
+      <a class="nav-link" href="#recommendations"><span aria-hidden="true">☷</span>Рекомендации</a>
+      <a class="nav-link" href="#assistant"><span aria-hidden="true">✧</span>AI Ассистент</a>
+    </nav>
+    <div class="sidebar-note"><span class="sparkle">✧</span><strong>Закупки с ясной логикой</strong><p>От данных к обоснованному заказу — в одном пространстве.</p><span class="demo-tag">Демонстрационный режим</span></div>
+    <div class="profile"><span class="avatar">МЗ</span><div>Менеджер закупок<small>Команда ЗакупAI</small></div></div>
+  </aside>
+  <main id="dashboard">
+    <div class="topline"><span>Рабочее пространство <span class="slash">/</span> <strong>Обзор закупок</strong></span><span class="system-status" id="system-status">Система готова</span></div>
+    <header class="page-header"><div><p class="eyebrow">ВАШ ЦЕНТР УПРАВЛЕНИЯ</p><h1>Управление закупками</h1><p>AI-система анализа и формирования рекомендаций по закупкам</p></div><span class="outline-tag">✧ AI-powered</span></header>
+    <section class="stats" aria-label="Статистика закупок" aria-live="polite">
+      <article class="stat-card"><span class="stat-icon blue">▦</span><p>Всего товаров</p><strong id="stat-total">0</strong><small>В текущем наборе данных</small></article>
+      <article class="stat-card"><span class="stat-icon indigo">↗</span><p>Требуют заказа</p><strong id="stat-order">0</strong><small>Рекомендовано к закупке</small></article>
+      <article class="stat-card"><span class="stat-icon amber">!</span><p>Срочные позиции</p><strong id="stat-urgent">0</strong><small>Высокий приоритет</small></article>
+      <article class="stat-card"><span class="stat-icon green">▤</span><p>Поставщиков</p><strong id="stat-suppliers">0</strong><small>В рекомендациях</small></article>
+    </section>
+    <div class="workflow" aria-label="Этапы работы"><span class="current" id="step-upload"><b>1</b> Загрузите данные</span><i>→</i><span id="step-review"><b>2</b> Изучите рекомендации</span><i>→</i><span id="step-export"><b>3</b> Скачайте заказ</span></div>
+    <section class="panel upload-panel" id="upload" aria-labelledby="upload-title">
+      <div class="section-heading"><div><h2 id="upload-title">Загрузка данных</h2><p>Начните с Excel-файла с данными о товарах и остатках.</p></div><span class="subtle-tag">.xlsx / .xls</span></div>
+      <div class="upload-layout"><div class="drop-zone" id="drop-zone"><span class="upload-icon" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg></span><strong>Перетащите Excel-файл сюда</strong><p>или выберите файл с компьютера</p><button class="button secondary" id="choose-file" type="button">Выбрать файл</button><input id="file-input" type="file" accept=".xlsx,.xls" hidden><p class="file-status" id="file-status" role="status">Поддерживаются форматы XLSX и XLS</p></div>
+      <div class="upload-guide"><span class="eyebrow">ОТ ДАННЫХ К РЕШЕНИЮ</span><h3>Планируйте закупки увереннее</h3><p>Просмотрите потребность в товарах, расставьте приоритеты и сформируйте заказ поставщику.</p><div class="demo-info"><span aria-hidden="true">ⓘ</span><p>Это демоверсия. Содержимое файла не считывается; расчёт и ответы ассистента используют тестовые данные.</p></div><button class="button primary" id="calculate" type="button"><span aria-hidden="true">✧</span> Рассчитать рекомендации</button><p class="calculation-status" id="calculation-status" role="status">Выберите файл, чтобы начать</p></div></div>
+    </section>
+    <section class="panel" id="recommendations" aria-labelledby="recommendations-title">
+      <div class="section-heading"><div><div class="title-line"><h2 id="recommendations-title">Рекомендации по закупкам</h2><span class="count" id="result-count">0</span></div><p>Все позиции, приоритеты и рекомендуемые объёмы — в одной таблице.</p></div><button class="button primary" id="export" type="button"><span aria-hidden="true">↓</span> Скачать заказ</button></div>
+      <div class="filters"><label class="search-field"><span aria-hidden="true">⌕</span><input type="search" id="search" aria-label="Поиск по SKU, товару или поставщику" placeholder="Поиск по SKU, товару или поставщику..."></label><select id="supplier-filter" aria-label="Поставщик"><option value="">Все поставщики</option></select><select id="urgency-filter" aria-label="Срочность"><option value="">Все уровни срочности</option><option value="high">Высокая</option><option value="medium">Средняя</option><option value="low">Низкая</option></select><button class="text-button" id="reset-filters" type="button">Сбросить фильтры</button></div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Таблица рекомендаций, доступна горизонтальная прокрутка"><table><caption class="sr-only">Рекомендации по закупкам на основе тестовых данных</caption><thead><tr><th scope="col">SKU</th><th scope="col">Товар</th><th scope="col">Поставщик</th><th scope="col">Остаток</th><th scope="col">В пути</th><th scope="col">Прогноз<br>спроса</th><th scope="col">Страховой<br>запас</th><th scope="col">Рекомендовано</th><th scope="col">Ед.</th><th scope="col">Срочность</th><th scope="col">Действие</th></tr></thead><tbody id="recommendation-rows"></tbody></table></div>
+      <div class="empty-state" id="empty-state"><span aria-hidden="true">▤</span><h3>Здесь появится ваш план закупок</h3><p>Загрузите Excel-файл и рассчитайте рекомендации.</p></div><div class="table-footer"><span id="table-summary" role="status">Данные ещё не загружены</span><span>Экспорт в CSV · с учётом фильтров</span></div>
+    </section>
+    <section class="panel assistant-panel" id="assistant" aria-labelledby="assistant-title"><div class="section-heading"><div class="assistant-heading"><span class="ai-avatar" aria-hidden="true">✧</span><div><h2 id="assistant-title">AI Ассистент</h2><p>Понятные объяснения для каждого решения</p></div></div><span class="subtle-tag">Mock AI</span></div><div class="chat-messages" id="chat-messages" role="log" aria-label="История сообщений" aria-live="polite"><div class="message assistant"><span class="message-label">ЗакупAI</span><p>Здравствуйте! Я помогу объяснить рекомендации по закупкам. Сначала загрузите данные и выполните расчёт.</p></div></div><div class="chat-bottom"><div class="suggestions"><button type="button" data-question="Почему нужно заказать TEST-001?">Почему нужно заказать TEST-001? ↗</button><button type="button" data-question="Какие позиции самые срочные?">Какие позиции самые срочные? ↗</button></div><form id="chat-form"><input id="chat-input" aria-label="Вопрос ассистенту" placeholder="Задайте вопрос о рекомендациях…" maxlength="1000" autocomplete="off" required><button class="button primary" id="send-chat" type="submit">Отправить <span aria-hidden="true">↑</span></button></form><p class="chat-note">Ответы сформированы по тестовым данным. Проверяйте заказ перед отправкой поставщику.</p></div></section>
+    <footer class="page-footer"><span>ЗакупAI <span class="slash">/</span> Умный подход к закупкам</span><span>Демонстрационная версия</span></footer>
+  </main>
+  <dialog id="product-dialog" aria-labelledby="product-title"><div class="dialog-header"><span class="eyebrow">КАРТОЧКА ТОВАРА</span><button class="close-button" id="close-dialog" type="button" aria-label="Закрыть карточку товара">×</button></div><div id="product-details"></div></dialog>
+  <div id="notifications" class="notifications" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>
