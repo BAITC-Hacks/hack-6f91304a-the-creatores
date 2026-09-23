@@ -422,6 +422,7 @@ async function calculateRecommendations() {
 function updateStatistics(animate = true) {
   cancelAnimationFrame(statisticsFrame);
   const stats = document.querySelector(".stats");
+  stats.classList.toggle("is-empty", state.status !== "complete");
   const values = [
     [$("stat-total"), state.products.length],
     [$("stat-order"), state.products.filter((p) => p.recommended_qty > 0).length],
