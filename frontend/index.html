@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f6f7f9">
-  <title>ЗакупAI — Управление закупками</title>
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="description" content="QOR.AI — Умное управление запасами и закупками.">
+  <title>QOR.AI — Управление закупками</title>
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -21,51 +22,64 @@
     <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Zm0 0v6h6M8 13l6 5m0-5-6 5"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 5v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 3h2l3 12h10l3-9H6M8 15l-1 3h12"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m10.3 4-8 14a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0ZM12 9v4m0 4h.01"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 17V5h11v12M14 9h4l3 4v4h-2M7 17h8M3 17h1"/><circle cx="5.5" cy="18" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/></symbol>
   </svg>
   <a class="skip-link" href="#dashboard" data-i18n="skip">К содержимому</a>
   <aside class="sidebar" id="sidebar">
-    <a class="brand" href="#dashboard" aria-label="ЗакупAI"><span class="brand-mark"><svg class="icon"><use href="#i-spark"/></svg></span><span class="brand-name">Закуп<span>AI</span></span></a>
+    <a class="brand" href="#dashboard" aria-label="QOR.AI"><span class="brand-mark" aria-hidden="true">Q<span>.</span></span><span class="brand-lockup"><span class="brand-name">QOR<span>.AI</span></span><span class="brand-tagline" data-i18n="brandShortTagline">Умное управление запасами</span></span></a>
+    <p class="nav-caption" data-i18n="workspace">Рабочее пространство</p>
     <nav data-i18n-aria="navigation" aria-label="Навигация">
       <a class="nav-link active" href="#dashboard" aria-current="location" data-i18n-aria="overview" data-i18n-title="overview"><svg class="icon"><use href="#i-grid"/></svg><span data-i18n="overview">Обзор</span></a>
-      <a class="nav-link" href="#upload" data-i18n-aria="upload" data-i18n-title="upload"><svg class="icon"><use href="#i-upload"/></svg><span data-i18n="upload">Загрузка</span></a>
+      <a class="nav-link" href="#upload" data-i18n-aria="upload" data-i18n-title="upload"><svg class="icon"><use href="#i-upload"/></svg><span data-i18n="upload">Загрузка данных</span></a>
       <a class="nav-link" href="#recommendations" data-i18n-aria="recommendations" data-i18n-title="recommendations"><svg class="icon"><use href="#i-list"/></svg><span data-i18n="recommendations">Рекомендации</span></a>
       <button class="nav-link" type="button" id="nav-assistant" aria-controls="assistant" aria-haspopup="dialog" data-i18n-aria="assistant" data-i18n-title="assistant"><svg class="icon"><use href="#i-spark"/></svg><span data-i18n="assistant">AI Ассистент</span></button>
     </nav>
-    <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-expanded="true" aria-controls="sidebar"><svg class="icon"><use href="#i-panel"/></svg><span data-i18n="collapse">Свернуть меню</span></button>
+    <div class="sidebar-footer">
+      <div class="sidebar-note"><span class="sidebar-note-icon"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></span><h3 data-i18n="aiAnalysis">AI-анализ</h3><p data-i18n="aiAnalysisDescription">Прогнозируйте спрос и формируйте заказ на основе данных.</p></div>
+      <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-expanded="true" aria-controls="sidebar"><svg class="icon"><use href="#i-panel"/></svg><span data-i18n="collapse">Свернуть меню</span></button>
+    </div>
   </aside>
 
   <main id="dashboard">
     <header class="page-header">
-      <div><h1 data-i18n="title">Управление закупками</h1><p data-i18n="subtitle">Подготовьте заказ на основе данных склада</p></div>
+      <div><div class="header-eyebrow"><span class="eyebrow-text" data-i18n="headerEyebrow">Обзор рабочего пространства</span><span class="ai-badge"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg>AI-powered</span></div><h1 data-i18n="title">Управление закупками</h1><p data-i18n="subtitle">Контролируйте запасы, прогнозируйте спрос и формируйте закупки на основе данных.</p></div>
       <div class="header-tools"><span class="system-status" id="system-status" role="status">Система готова</span><select id="language" aria-label="Язык / Тіл / Language"><option value="ru" lang="ru">RU · Русский</option><option value="kz" lang="kk">KZ · Қазақша</option><option value="en" lang="en">EN · English</option></select></div>
     </header>
     <section class="stats" data-i18n-aria="statistics" aria-label="Статистика" aria-live="polite">
-      <article><p data-i18n="total">Всего товаров</p><strong id="stat-total">0</strong></article>
-      <article><p data-i18n="toOrder">Требуют заказа</p><strong id="stat-order">0</strong></article>
-      <article><p data-i18n="urgent">Срочные позиции</p><strong id="stat-urgent">0</strong></article>
-      <article><p data-i18n="suppliers">Поставщиков</p><strong id="stat-suppliers">0</strong></article>
+      <article><div class="stat-top"><p data-i18n="total">Всего товаров</p><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg></span></div><strong id="stat-total">—</strong><p class="stat-description" data-i18n="totalHint">В вашем ассортименте</p></article>
+      <article><div class="stat-top"><p data-i18n="toOrder">Требуют заказа</p><span class="stat-icon warning"><svg class="icon" aria-hidden="true"><use href="#i-cart"/></svg></span></div><strong id="stat-order">—</strong><p class="stat-description" data-i18n="orderHint">Для пополнения запасов</p></article>
+      <article><div class="stat-top"><p data-i18n="urgent">Срочные позиции</p><span class="stat-icon danger"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg></span></div><strong id="stat-urgent">—</strong><p class="stat-description" data-i18n="urgentHint">Нуждаются во внимании</p></article>
+      <article><div class="stat-top"><p data-i18n="suppliers">Поставщиков</p><span class="stat-icon success"><svg class="icon" aria-hidden="true"><use href="#i-truck"/></svg></span></div><strong id="stat-suppliers">—</strong><p class="stat-description" data-i18n="suppliersHint">В текущих рекомендациях</p></article>
     </section>
     <ol class="workflow" data-i18n-aria="workflow" aria-label="Этапы работы">
-      <li id="step-upload" class="current" aria-current="step"><b>1</b><span data-i18n="data">Данные</span></li>
-      <li id="step-review"><b>2</b><span data-i18n="recommendations">Рекомендации</span></li>
-      <li id="step-export"><b>3</b><span data-i18n="exportStep">Экспорт</span></li>
+      <li id="step-upload" class="current" aria-current="step"><b aria-hidden="true">1</b><div class="step-copy"><span data-i18n="stepUpload">Загрузите данные</span><small data-i18n="stepUploadHint">Excel с данными склада</small></div></li>
+      <li id="step-review"><b aria-hidden="true">2</b><div class="step-copy"><span data-i18n="stepReview">Изучите рекомендации</span><small data-i18n="stepReviewHint">Приоритеты и объём закупок</small></div></li>
+      <li id="step-export"><b aria-hidden="true">3</b><div class="step-copy"><span data-i18n="stepExport">Скачайте заказ</span><small data-i18n="stepExportHint">Готовый файл для работы</small></div></li>
     </ol>
 
     <section class="panel upload-panel" id="upload" aria-labelledby="upload-title">
-      <div class="section-heading"><h2 id="upload-title" data-i18n="uploadTitle">Начните с данных</h2><span class="subtle-tag" data-i18n="demo">Деморежим</span></div>
+      <div class="section-heading"><div><h2 id="upload-title" data-i18n="uploadTitle">Начните с данных</h2><p class="section-description" data-i18n="uploadDescription">Загрузите файл, чтобы перейти к рекомендациям по закупкам.</p></div><span class="subtle-tag" data-i18n="demo">Деморежим</span></div>
+      <div class="upload-layout">
       <div class="drop-zone" id="drop-zone">
-        <div id="upload-prompt" class="upload-prompt"><span class="upload-icon"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg></span><h3 data-i18n="dropTitle">Перетащите Excel-файл</h3><p data-i18n="formats">XLSX или XLS</p></div>
-        <div class="file-card" id="file-card" hidden><span class="file-icon"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg></span><div class="file-meta"><strong id="file-name"></strong><span id="file-status" role="status"></span></div><button class="icon-button" id="remove-file" type="button" data-i18n-aria="removeFile" data-i18n-title="removeFile"><svg class="icon"><use href="#i-close"/></svg></button></div>
+        <div id="upload-prompt" class="upload-prompt"><span class="upload-icon"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg></span><h3 data-i18n="dropTitle">Перетащите Excel-файл</h3><p class="drop-hint" data-i18n="dropHint">или выберите его на устройстве</p></div>
+        <div class="file-card" id="file-card" hidden><span class="file-icon"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg></span><div class="file-meta"><strong id="file-name"></strong><span class="file-size" id="file-size"></span><span id="file-status" role="status"></span></div><button class="text-button remove-file" id="remove-file" type="button" data-i18n-aria="removeFile" data-i18n-title="removeFile"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg><span data-i18n="remove">Удалить</span></button></div>
         <button class="button secondary" id="choose-file" type="button">Выбрать файл</button>
         <input id="file-input" type="file" accept=".xlsx,.xls" hidden>
+        <p class="file-formats" data-i18n="formats">XLSX или XLS</p>
         <p class="upload-error" id="upload-error" role="alert" hidden></p>
       </div>
-      <div class="upload-actions"><button class="button primary" id="calculate" type="button"><span class="spinner" aria-hidden="true" hidden></span><span id="calculate-label">Рассчитать рекомендации</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button><p id="calculation-status" role="status"></p></div>
+      <aside class="upload-guide"><span class="guide-eyebrow" data-i18n="guideEyebrow">От данных к решению</span><h3 data-i18n="guideTitle">Закупки с ясной логикой</h3><p data-i18n="guideDescription">Всё необходимое для следующего заказа — в одном месте.</p><div class="upload-guide-list"><div><b aria-hidden="true"><svg class="icon"><use href="#i-box"/></svg></b><div><strong data-i18n="guideDataTitle">Запасы под контролем</strong><span data-i18n="guideDataText">Остатки и ожидаемые поступления</span></div></div><div><b aria-hidden="true"><svg class="icon"><use href="#i-spark"/></svg></b><div><strong data-i18n="guideReviewTitle">Понятные рекомендации</strong><span data-i18n="guideReviewText">Объём заказа и его обоснование</span></div></div><div><b aria-hidden="true"><svg class="icon"><use href="#i-down"/></svg></b><div><strong data-i18n="guideOrderTitle">Готовый заказ</strong><span data-i18n="guideOrderText">Экспорт с учётом ваших фильтров</span></div></div></div></aside>
+      </div>
+      <div class="upload-actions"><button class="button primary" id="calculate" type="button"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg><span class="spinner" aria-hidden="true" hidden></span><span id="calculate-label">Рассчитать рекомендации</span></button><p id="calculation-status" role="status"></p></div>
+      <div class="analysis-state" id="analysis-state" role="status" hidden><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg><div><strong data-i18n="analysisTitle">Анализируем данные</strong><p data-i18n="analysisNote">Подготавливаем демонстрационные рекомендации.</p></div><span class="analysis-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
       <details class="demo-details"><summary data-i18n="demoAbout">Как работает демоверсия</summary><p data-i18n="demoNote">Файл остаётся на вашем устройстве. Содержимое не считывается; рекомендации и ответы AI используют тестовые данные.</p></details>
     </section>
 
     <section class="panel recommendations-panel" id="recommendations" aria-labelledby="recommendations-title">
-      <div class="section-heading"><div class="title-line"><h2 id="recommendations-title" data-i18n="recommendations">Рекомендации</h2><span class="count" id="result-count" hidden>0</span></div><button class="button primary" id="export" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg><span data-i18n="download">Скачать заказ</span></button></div>
+      <div class="section-heading"><div><div class="title-line"><h2 id="recommendations-title" data-i18n="recommendations">Рекомендации</h2><span class="count" id="result-count" hidden>0</span></div><p class="section-description" data-i18n="recommendationsDescription">Что заказать, в каком количестве и почему.</p></div><button class="button primary" id="export" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg><span data-i18n="download">Скачать заказ</span></button></div>
       <div class="filters" id="filters" hidden>
         <label class="search-field"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input type="search" id="search" data-i18n-aria="searchLabel" data-i18n-placeholder="search" placeholder="Поиск по SKU, товару или поставщику…"></label>
         <select id="supplier-filter" data-i18n-aria="supplier" aria-label="Поставщик"></select>
@@ -73,20 +87,21 @@
         <button class="text-button" id="reset-filters" type="button" data-i18n="reset">Сбросить</button>
       </div>
       <div class="table-scroll" id="table-scroll" tabindex="0" role="region" data-i18n-aria="tableRegion" aria-label="Таблица рекомендаций" hidden>
-        <table><caption class="sr-only" data-i18n="tableCaption">Рекомендации по тестовым данным</caption><thead><tr><th scope="col">SKU</th><th scope="col" data-i18n="product">Товар</th><th scope="col" data-i18n="supplier">Поставщик</th><th scope="col" class="numeric" data-i18n="stock">Остаток</th><th scope="col" class="numeric" data-i18n="recommended">Рекомендовано</th><th scope="col" data-i18n="urgency">Срочность</th><th scope="col"><span class="sr-only" data-i18n="details">Подробнее</span></th></tr></thead><tbody id="recommendation-rows"></tbody></table>
+        <table><caption class="sr-only" data-i18n="tableCaption">Рекомендации по тестовым данным</caption><thead><tr><th scope="col" data-i18n="product">Товар</th><th scope="col">SKU</th><th scope="col" data-i18n="supplier">Поставщик</th><th scope="col" class="numeric" data-i18n="stock">Остаток</th><th scope="col" class="numeric" data-i18n="incoming">В пути</th><th scope="col" class="numeric" data-i18n="forecastShort">Прогноз</th><th scope="col" class="numeric" data-i18n="recommended">Рекомендовано</th><th scope="col" data-i18n="urgency">Приоритет</th><th scope="col" data-i18n="action">Действие</th></tr></thead><tbody id="recommendation-rows"></tbody></table>
       </div>
-      <div class="empty-state" id="empty-state"><svg class="icon" aria-hidden="true"><use href="#i-list"/></svg><div><h3></h3><p></p></div></div>
+      <div class="empty-state" id="empty-state"><span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-list"/></svg></span><div><h3>Данные ещё не загружены</h3><p>Загрузите Excel, чтобы увидеть рекомендации по закупкам.</p></div><button class="button secondary" id="empty-upload" type="button"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg><span data-i18n="uploadExcel">Загрузить Excel</span></button></div>
       <div class="table-footer" id="table-footer" hidden><span id="table-summary" role="status"></span><span data-i18n="exportHint">CSV · с учётом фильтров</span></div>
     </section>
-    <footer class="page-footer"><span>ЗакупAI</span><span data-i18n="demo">Деморежим</span></footer>
+    <footer class="page-footer"><span>QOR.AI <span aria-hidden="true">·</span> <span data-i18n="brandTagline">Умное управление запасами и закупками</span></span><span data-i18n="demo">Деморежим</span></footer>
   </main>
 
   <button class="ai-launcher button" id="open-assistant" type="button" aria-controls="assistant" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg><span data-i18n="askAI">Спросить AI</span></button>
   <dialog class="ai-drawer" id="assistant" aria-labelledby="assistant-title">
     <div class="drawer-content">
-      <div class="drawer-header"><div><h2 id="assistant-title" data-i18n="assistantTitle">ЗакупAI Ассистент</h2><p data-i18n="assistantSubtitle">Объяснения на основе ваших рекомендаций</p></div><button class="icon-button" id="close-assistant" type="button" data-i18n-aria="close" autofocus><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="drawer-header"><div class="assistant-identity"><span class="assistant-avatar"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></span><div><h2 id="assistant-title" data-i18n="assistantTitle">QOR AI Ассистент</h2><p data-i18n="assistantSubtitle">Объяснения на основе ваших рекомендаций</p></div></div><button class="icon-button" id="close-assistant" type="button" data-i18n-aria="close" autofocus><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="chat-welcome" id="chat-welcome"><span class="welcome-mark"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></span><span class="welcome-kicker">QOR AI</span><h3 data-i18n="welcomeTitle">Спросите меня о запасах и закупках</h3><p data-i18n="welcomeDescription">Помогу разобраться в рекомендациях и приоритетах заказа.</p></div>
       <div class="chat-messages" id="chat-messages" role="log" data-i18n-aria="chatHistory" aria-label="История сообщений" aria-live="polite"></div>
-      <div class="chat-bottom"><div class="suggestions"><button type="button" data-question="why" data-i18n="quickWhy">Почему такой заказ?</button><button type="button" data-question="urgent" data-i18n="quickUrgent">Покажи срочные позиции</button><button type="button" data-question="product" data-i18n="quickProduct">Объясни TEST-001</button></div>
+      <div class="chat-bottom"><div class="suggestions"><button type="button" data-question="stock" data-i18n="quickStock">Какие товары скоро закончатся?</button><button type="button" data-question="month" data-i18n="quickMonth">Что нужно заказать в этом месяце?</button><button type="button" data-question="urgent" data-i18n="quickUrgent">Покажи срочные позиции</button><button type="button" data-question="why" data-i18n="quickWhy">Почему рекомендуется этот заказ?</button></div>
         <form id="chat-form"><input id="chat-input" data-i18n-aria="question" data-i18n-placeholder="chatPlaceholder" placeholder="Спросите о рекомендациях…" maxlength="1000" autocomplete="off" required><button class="button primary" id="send-chat" type="submit" data-i18n="send">Отправить</button></form>
         <p class="chat-note" data-i18n="chatNote">Mock AI · ответы по тестовым данным</p>
       </div>
