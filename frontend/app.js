@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 // Integration map only. No API requests are made in this standalone prototype.
 const API_ENDPOINTS = Object.freeze({
@@ -20,18 +20,181 @@ const MOCK_PRODUCTS = [
   { sku: "TEST-007", name: "Клемма соединительная", supplier: "ABB", stock: 300, incoming_in_period: 50, forecast_demand: 200, safety_stock: 50, recommended_qty: 0, unit: "шт", urgency: "low", reason: "Остаток и ожидаемая поставка покрывают спрос и страховой запас. Дополнительный заказ не требуется.", warnings: [] },
   { sku: "TEST-008", name: "DIN-рейка 35 мм", supplier: "EKF", stock: 120, incoming_in_period: 0, forecast_demand: 80, safety_stock: 20, recommended_qty: 0, unit: "шт", urgency: "low", reason: "Текущего остатка достаточно для покрытия плановой потребности.", warnings: [] },
 ];
-const URGENCY = { high: "Высокая", medium: "Средняя", low: "Низкая" };
-const state = { file: null, products: [], calculating: false, chatting: false, revision: 0 };
+
+// Centralized interface and fixture translations. The product contract stays unchanged.
+const translations = {
+  ru: {
+    skip: "К содержимому", navigation: "Основная навигация", overview: "Обзор", upload: "Загрузка",
+    recommendations: "Рекомендации", assistant: "AI Ассистент", collapse: "Свернуть меню", expand: "Развернуть меню",
+    title: "Управление закупками", subtitle: "Подготовьте заказ на основе данных склада", ready: "Система готова",
+    statistics: "Статистика закупок", total: "Всего товаров", toOrder: "Требуют заказа", urgent: "Срочные позиции", suppliers: "Поставщиков",
+    workflow: "Этапы работы", data: "Данные", exportStep: "Экспорт", uploadTitle: "Начните с данных", uploadedTitle: "Данные загружены",
+    demo: "Деморежим", dropTitle: "Перетащите Excel-файл", formats: "XLSX или XLS", chooseFile: "Выбрать файл", replaceFile: "Заменить файл",
+    removeFile: "Удалить выбранный файл", fileReady: "✓ Файл готов к расчёту", fileProcessed: "✓ Расчёт завершён",
+    calculate: "Рассчитать рекомендации", calculating: "Выполняется расчёт…", calculationDone: "Расчёт завершён", calculationError: "Не удалось выполнить расчёт. Попробуйте ещё раз.",
+    demoAbout: "Как работает демоверсия", demoNote: "Файл остаётся на вашем устройстве. Содержимое не считывается; рекомендации и ответы AI используют тестовые данные.",
+    download: "Скачать заказ", searchLabel: "Поиск по SKU, товару или поставщику", search: "Поиск по SKU, товару или поставщику…",
+    supplier: "Поставщик", allSuppliers: "Все поставщики", urgency: "Срочность", allUrgencies: "Любая срочность",
+    high: "Высокая", medium: "Средняя", low: "Низкая", reset: "Сбросить", tableRegion: "Таблица рекомендаций с горизонтальной прокруткой",
+    tableCaption: "Рекомендации по тестовым данным", product: "Товар", stock: "Остаток", recommended: "Рекомендовано", details: "Подробнее", detailsFor: "Подробнее: {name}",
+    emptyTitle: "Рекомендации появятся после расчёта", emptyText: "Выберите Excel-файл, чтобы начать.", noResults: "Ничего не найдено", noResultsText: "Измените запрос или сбросьте фильтры.",
+    loadingTitle: "Готовим рекомендации…", loadingText: "Это займёт несколько секунд.", summary: "Показано {count} из {total} · К заказу: {orders}", exportHint: "CSV · с учётом фильтров",
+    askAI: "Спросить AI", assistantTitle: "ЗакупAI Ассистент", assistantSubtitle: "Объяснения на основе ваших рекомендаций", close: "Закрыть",
+    chatHistory: "История сообщений", quickWhy: "Почему такой заказ?", quickUrgent: "Покажи срочные позиции", quickProduct: "Объясни TEST-001",
+    question: "Вопрос ассистенту", chatPlaceholder: "Спросите о рекомендациях…", send: "Отправить", chatNote: "Mock AI · ответы по тестовым данным",
+    greeting: "Здравствуйте! Помогу разобраться в рекомендациях. Загрузите Excel-файл и выполните расчёт, чтобы начать.",
+    greetingReady: "Рекомендации готовы. Укажите SKU товара или выберите быстрый вопрос — объясню, что и почему нужно заказать.",
+    you: "Вы", aiName: "ЗакупAI · демо", thinking: "Готовлю объяснение…", needData: "Сначала загрузите Excel-файл и выполните расчёт. Затем я смогу объяснить рекомендации.",
+    changedData: "Данные изменились. Задайте вопрос повторно после расчёта.", chatError: "Не удалось подготовить ответ. Отправьте вопрос ещё раз.",
+    chatProduct: "{name} ({sku})\n\nПрогноз спроса — {forecast} {unit}, остаток — {stock} {unit}, в пути — {incoming} {unit}, страховой запас — {safety} {unit}.",
+    chatOrder: "Рекомендуется заказать {quantity} {unit}.", chatNoOrder: "Заказ не требуется: рекомендовано 0.", chatUrgent: "В первую очередь проверьте эти позиции:",
+    chatNoUrgent: "Позиций с высокой срочностью нет.", chatUrgentItem: "• {sku} — {name}: {quantity} {unit}, {supplier}.",
+    chatUrgentEnd: "Уточните сроки поставки перед заказом.", chatFallback: "Укажите SKU или полное название товара — я объясню рекомендацию. Также могу показать срочные позиции.",
+    chatOverview: "К заказу: {orders} из {total} позиций. Высокий приоритет: {urgent}. Рекомендации учитывают прогноз спроса, остаток, поставки и страховой запас. Укажите SKU для подробного объяснения.",
+    productDetails: "Карточка товара", incoming: "В пути", forecast: "Прогноз спроса", safety: "Страховой запас", reasonTitle: "Почему рекомендуется этот заказ?",
+    baseExplanation: "Объяснение базовой потребности", baseNeed: "Базовая потребность", negativeNeed: "Запаса достаточно — дополнительный заказ не нужен.",
+    businessRules: "Итоговый заказ может учитывать правила backend, например MOQ — минимальный объём заказа.", warnings: "Предупреждения", noWarnings: "Предупреждений нет.", unit: "шт", unitHeader: "Единица",
+    exportQuantity: "Рекомендованное количество", fileSelected: "Файл выбран", fileRemoved: "Файл удалён", selectFirst: "Выберите Excel-файл", invalidFormat: "Неверный формат. Выберите XLSX или XLS.", oneFile: "Выберите один Excel-файл", noExport: "Нет данных для экспорта", exportDone: "Заказ сформирован: {count} позиций", exportError: "Не удалось скачать заказ. Попробуйте ещё раз.",
+    products: [
+      ["Кабель силовой", "Остатка и ожидаемой поставки недостаточно для покрытия прогнозируемого спроса."],
+      ["Автоматический выключатель C16", "Запас выключателей необходимо пополнить для покрытия ожидаемого спроса.", "Уточните срок доставки у поставщика."],
+      ["Контактор 25 А", "Текущий запас ограничен, подтверждённых поставок в периоде нет.", "Нет подтверждённых поступлений в плановом периоде."],
+      ["Розетка с заземлением", "Плановое пополнение позволит сохранить страховой запас."],
+      ["Щит распределительный", "Ожидаемые поступления покрывают только часть плановой потребности."],
+      ["УЗО 40 А / 30 мА", "Рекомендуется небольшое плановое пополнение для поддержания резерва."],
+      ["Клемма соединительная", "Остаток и ожидаемая поставка покрывают спрос и страховой запас. Дополнительный заказ не требуется."],
+      ["DIN-рейка 35 мм", "Текущего остатка достаточно для покрытия плановой потребности."]
+    ]
+  },
+  kz: {
+    skip: "Мазмұнға өту", navigation: "Негізгі мәзір", overview: "Шолу", upload: "Жүктеу",
+    recommendations: "Ұсынымдар", assistant: "AI көмекші", collapse: "Мәзірді жинау", expand: "Мәзірді ашу",
+    title: "Сатып алуды басқару", subtitle: "Қойма деректері негізінде тапсырыс дайындаңыз", ready: "Жүйе дайын",
+    statistics: "Сатып алу статистикасы", total: "Барлық тауар", toOrder: "Тапсырыс қажет", urgent: "Шұғыл тауарлар", suppliers: "Жеткізушілер",
+    workflow: "Жұмыс кезеңдері", data: "Деректер", exportStep: "Экспорт", uploadTitle: "Деректерден бастаңыз", uploadedTitle: "Деректер жүктелді",
+    demo: "Демо режим", dropTitle: "Excel файлын осында сүйреңіз", formats: "XLSX немесе XLS", chooseFile: "Файлды таңдау", replaceFile: "Файлды ауыстыру",
+    removeFile: "Таңдалған файлды жою", fileReady: "✓ Файл есептеуге дайын", fileProcessed: "✓ Есептеу аяқталды",
+    calculate: "Ұсынымдарды есептеу", calculating: "Есептеліп жатыр…", calculationDone: "Есептеу аяқталды", calculationError: "Есептеу орындалмады. Қайталап көріңіз.",
+    demoAbout: "Демо нұсқа қалай жұмыс істейді", demoNote: "Файл құрылғыңызда қалады. Оның мазмұны оқылмайды; ұсынымдар мен AI жауаптары сынақ деректеріне негізделген.",
+    download: "Тапсырысты жүктеп алу", searchLabel: "SKU, тауар немесе жеткізуші бойынша іздеу", search: "SKU, тауар немесе жеткізуші бойынша іздеу…",
+    supplier: "Жеткізуші", allSuppliers: "Барлық жеткізуші", urgency: "Шұғылдық", allUrgencies: "Барлық деңгей",
+    high: "Жоғары", medium: "Орташа", low: "Төмен", reset: "Тазарту", tableRegion: "Көлденең айналдыруға болатын ұсынымдар кестесі",
+    tableCaption: "Сынақ деректері бойынша ұсынымдар", product: "Тауар", stock: "Қалдық", recommended: "Ұсынылған саны", details: "Толығырақ", detailsFor: "Толығырақ: {name}",
+    emptyTitle: "Ұсынымдар есептеуден кейін көрсетіледі", emptyText: "Бастау үшін Excel файлын таңдаңыз.", noResults: "Ештеңе табылмады", noResultsText: "Іздеу шарттарын өзгертіңіз немесе сүзгілерді тазалаңыз.",
+    loadingTitle: "Ұсынымдар дайындалып жатыр…", loadingText: "Бұл бірнеше секунд алады.", summary: "{total} тауардың {count} көрсетілді · Тапсырыс қажет: {orders}", exportHint: "CSV · сүзгілер ескеріледі",
+    askAI: "AI-дан сұрау", assistantTitle: "ЗакупAI көмекшісі", assistantSubtitle: "Ұсынымдарыңызға негізделген түсіндірмелер", close: "Жабу",
+    chatHistory: "Хабарламалар тарихы", quickWhy: "Неге осындай тапсырыс?", quickUrgent: "Шұғыл тауарларды көрсет", quickProduct: "TEST-001 туралы түсіндір",
+    question: "Көмекшіге сұрақ", chatPlaceholder: "Ұсынымдар туралы сұраңыз…", send: "Жіберу", chatNote: "Mock AI · сынақ деректері бойынша жауаптар",
+    greeting: "Сәлеметсіз бе! Ұсынымдарды түсінуге көмектесемін. Бастау үшін Excel файлын жүктеп, есептеуді орындаңыз.",
+    greetingReady: "Ұсынымдар дайын. Тауардың SKU кодын жазыңыз немесе дайын сұрақты таңдаңыз — нені және не үшін тапсырыс беру керегін түсіндіремін.",
+    you: "Сіз", aiName: "ЗакупAI · демо", thinking: "Түсіндірме дайындалып жатыр…", needData: "Алдымен Excel файлын жүктеп, есептеуді орындаңыз. Содан кейін ұсынымдарды түсіндіре аламын.",
+    changedData: "Деректер өзгерді. Есептеуден кейін сұрақты қайта қойыңыз.", chatError: "Жауап дайындалмады. Сұрақты қайта жіберіңіз.",
+    chatProduct: "{name} ({sku})\n\nСұраныс болжамы — {forecast} {unit}, қалдық — {stock} {unit}, жолда — {incoming} {unit}, сақтандыру қоры — {safety} {unit}.",
+    chatOrder: "{quantity} {unit} тапсырыс беру ұсынылады.", chatNoOrder: "Тапсырыс қажет емес: ұсынылған саны — 0.", chatUrgent: "Алдымен мына тауарларды тексеріңіз:",
+    chatNoUrgent: "Шұғылдығы жоғары тауарлар жоқ.", chatUrgentItem: "• {sku} — {name}: {quantity} {unit}, {supplier}.",
+    chatUrgentEnd: "Тапсырыс бермес бұрын жеткізу мерзімін нақтылаңыз.", chatFallback: "SKU немесе тауардың толық атауын жазыңыз — ұсынымды түсіндіремін. Шұғыл тауарларды да көрсете аламын.",
+    chatOverview: "{total} тауардың {orders} үшін тапсырыс қажет. Жоғары басымдық: {urgent}. Ұсынымдар сұраныс болжамын, қалдықты, жеткізілімдерді және сақтандыру қорын ескереді. Толық түсіндірме үшін SKU көрсетіңіз.",
+    productDetails: "Тауар карточкасы", incoming: "Жолда", forecast: "Сұраныс болжамы", safety: "Сақтандыру қоры", reasonTitle: "Бұл тапсырыс неге ұсынылады?",
+    baseExplanation: "Базалық қажеттіліктің түсіндірмесі", baseNeed: "Базалық қажеттілік", negativeNeed: "Қор жеткілікті — қосымша тапсырыс қажет емес.",
+    businessRules: "Соңғы тапсырыста backend ережелері, мысалы MOQ — ең аз тапсырыс көлемі ескерілуі мүмкін.", warnings: "Ескертулер", noWarnings: "Ескертулер жоқ.", unit: "дана", unitHeader: "Өлшем бірлігі",
+    exportQuantity: "Ұсынылған саны", fileSelected: "Файл таңдалды", fileRemoved: "Файл жойылды", selectFirst: "Excel файлын таңдаңыз", invalidFormat: "Формат қате. XLSX немесе XLS таңдаңыз.", oneFile: "Бір Excel файлын таңдаңыз", noExport: "Экспортқа деректер жоқ", exportDone: "Тапсырыс дайын: {count} тауар", exportError: "Тапсырысты жүктеп алу мүмкін болмады. Қайталап көріңіз.",
+    products: [
+      ["Күштік кабель", "Қалдық пен күтілетін жеткізілім болжанған сұранысты өтеуге жеткіліксіз."],
+      ["C16 автоматты ажыратқышы", "Күтілетін сұранысты өтеу үшін ажыратқыштар қорын толықтыру қажет.", "Жеткізу мерзімін жеткізушіден нақтылаңыз."],
+      ["25 А контакторы", "Қазіргі қор аз, осы кезеңде расталған жеткізілімдер жоқ.", "Жоспарлы кезеңге расталған жеткізілімдер жоқ."],
+      ["Жерге тұйықталған розетка", "Жоспарлы толықтыру сақтандыру қорын сақтауға мүмкіндік береді."],
+      ["Тарату қалқаны", "Күтілетін жеткізілімдер жоспарлы қажеттіліктің бір бөлігін ғана өтейді."],
+      ["40 А / 30 мА қорғаныш ажыратқышы", "Резервті сақтау үшін қорды аздап толықтыру ұсынылады."],
+      ["Жалғау клеммасы", "Қалдық пен күтілетін жеткізілім сұранысты және сақтандыру қорын өтейді. Қосымша тапсырыс қажет емес."],
+      ["35 мм DIN рейкасы", "Қазіргі қалдық жоспарлы қажеттілікті өтеуге жеткілікті."]
+    ]
+  },
+  en: {
+    skip: "Skip to content", navigation: "Main navigation", overview: "Overview", upload: "Upload",
+    recommendations: "Recommendations", assistant: "AI Assistant", collapse: "Collapse menu", expand: "Expand menu",
+    title: "Procurement management", subtitle: "Turn inventory data into a purchase order", ready: "System ready",
+    statistics: "Procurement summary", total: "Total products", toOrder: "Require ordering", urgent: "Urgent items", suppliers: "Suppliers",
+    workflow: "Workflow", data: "Data", exportStep: "Export", uploadTitle: "Start with your data", uploadedTitle: "Data uploaded",
+    demo: "Demo mode", dropTitle: "Drop your Excel file here", formats: "XLSX or XLS", chooseFile: "Choose file", replaceFile: "Replace file",
+    removeFile: "Remove selected file", fileReady: "✓ Ready to calculate", fileProcessed: "✓ Calculation complete",
+    calculate: "Calculate recommendations", calculating: "Calculating…", calculationDone: "Calculation complete", calculationError: "Calculation failed. Please try again.",
+    demoAbout: "How this demo works", demoNote: "Your file stays on your device. Its contents are not read; recommendations and AI responses use sample data.",
+    download: "Download order", searchLabel: "Search by SKU, product or supplier", search: "Search by SKU, product or supplier…",
+    supplier: "Supplier", allSuppliers: "All suppliers", urgency: "Urgency", allUrgencies: "All priorities",
+    high: "High", medium: "Medium", low: "Low", reset: "Reset", tableRegion: "Recommendations table, scroll horizontally",
+    tableCaption: "Recommendations based on sample data", product: "Product", stock: "On hand", recommended: "Recommended", details: "Details", detailsFor: "Details: {name}",
+    emptyTitle: "Recommendations will appear after calculation", emptyText: "Choose an Excel file to get started.", noResults: "No matching products", noResultsText: "Try a different search or reset your filters.",
+    loadingTitle: "Preparing recommendations…", loadingText: "This will only take a few seconds.", summary: "Showing {count} of {total} · To order: {orders}", exportHint: "CSV · active filters applied",
+    askAI: "Ask AI", assistantTitle: "ZakupAI Assistant", assistantSubtitle: "Understand your procurement recommendations", close: "Close",
+    chatHistory: "Message history", quickWhy: "Why this order?", quickUrgent: "Show urgent items", quickProduct: "Explain TEST-001",
+    question: "Question for the assistant", chatPlaceholder: "Ask about recommendations…", send: "Send", chatNote: "Mock AI · responses based on sample data",
+    greeting: "Hello! I can help explain your recommendations. Upload an Excel file and run the calculation to get started.",
+    greetingReady: "Your recommendations are ready. Enter a product SKU or choose a quick question to understand what to order and why.",
+    you: "You", aiName: "ZakupAI · demo", thinking: "Preparing an explanation…", needData: "Upload an Excel file and run the calculation first. Then I can explain the recommendations.",
+    changedData: "The dataset has changed. Please ask again after calculation.", chatError: "Could not prepare a response. Please send your question again.",
+    chatProduct: "{name} ({sku})\n\nForecast demand: {forecast} {unit}; on hand: {stock} {unit}; incoming: {incoming} {unit}; safety stock: {safety} {unit}.",
+    chatOrder: "Recommended order: {quantity} {unit}.", chatNoOrder: "No order required: recommended quantity is 0.", chatUrgent: "Review these high-priority items first:",
+    chatNoUrgent: "There are no high-priority items.", chatUrgentItem: "• {sku} — {name}: {quantity} {unit}, {supplier}.",
+    chatUrgentEnd: "Confirm delivery dates before placing the order.", chatFallback: "Enter a SKU or full product name for an explanation. I can also show urgent items.",
+    chatOverview: "{orders} of {total} products require ordering. High priority: {urgent}. Recommendations reflect demand, stock on hand, incoming deliveries and safety stock. Enter a SKU for a detailed explanation.",
+    productDetails: "Product details", incoming: "Incoming", forecast: "Forecast demand", safety: "Safety stock", reasonTitle: "Why is this order recommended?",
+    baseExplanation: "Base requirement breakdown", baseNeed: "Base requirement", negativeNeed: "Inventory is sufficient; no additional order is needed.",
+    businessRules: "The final order may include backend business rules, such as a minimum order quantity (MOQ).", warnings: "Warnings", noWarnings: "No warnings.", unit: "pcs", unitHeader: "Unit",
+    exportQuantity: "Recommended quantity", fileSelected: "File selected", fileRemoved: "File removed", selectFirst: "Choose an Excel file", invalidFormat: "Invalid format. Choose XLSX or XLS.", oneFile: "Choose one Excel file", noExport: "No items to export", exportDone: "Order ready: {count} items", exportError: "Could not download the order. Please try again.",
+    products: [
+      ["Power cable", "Stock on hand and incoming deliveries do not cover forecast demand."],
+      ["C16 circuit breaker", "Replenish circuit breaker inventory to cover expected demand.", "Confirm the delivery date with the supplier."],
+      ["25 A contactor", "Current stock is limited and no deliveries are confirmed for this period.", "No confirmed deliveries in the planning period."],
+      ["Grounded socket", "Scheduled replenishment will maintain safety stock."],
+      ["Distribution board", "Expected deliveries cover only part of the planned requirement."],
+      ["40 A / 30 mA RCD", "A small scheduled replenishment is recommended to maintain the reserve."],
+      ["Terminal connector", "Current stock and incoming deliveries cover demand and safety stock. No additional order is needed."],
+      ["35 mm DIN rail", "Stock on hand is sufficient to cover the planned requirement."]
+    ]
+  }
+};
+
+const state = {
+  language: "ru", file: null, products: [], calculating: false, chatting: false,
+  revision: 0, status: "idle", fileError: false, exported: false,
+  activeSku: null, messages: [{ role: "assistant", kind: "greeting" }],
+};
 const $ = (id) => document.getElementById(id);
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const normalize = (value) => value.toLocaleLowerCase("ru-RU").replaceAll("ё", "е").trim();
+const normalize = (value) => String(value).toLocaleLowerCase().replaceAll("ё", "е").trim();
 const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+const t = (key, params = {}, language = state.language) => {
+  const template = translations[language][key];
+  if (typeof template !== "string") throw new Error(`Missing translation: ${language}.${key}`);
+  return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
+};
 
-// Replace these methods with upload (FormData), calculate, recommendations,
-// and chat API calls when integrating. Rendering is independent of transport.
+function readPreference(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function savePreference(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* The UI also works without storage. */ }
+}
+
+function localizedProduct(product, language = state.language) {
+  const index = MOCK_PRODUCTS.findIndex((fixture) => fixture.sku === product.sku);
+  // Only translate known fixtures. Future API products keep their server text.
+  const isFixture = index >= 0 && MOCK_PRODUCTS[index].name === product.name && MOCK_PRODUCTS[index].reason === product.reason;
+  const copy = isFixture ? translations[language].products[index] : null;
+  return {
+    ...product,
+    name: copy?.[0] ?? product.name,
+    reason: copy?.[1] ?? product.reason,
+    warnings: copy ? (copy[2] ? [copy[2]] : []) : product.warnings,
+    unit: product.unit === "шт" ? t("unit", {}, language) : product.unit,
+  };
+}
+
+// Replace these transport methods with /api/upload (FormData), /api/calculate,
+// /api/recommendations and /api/chat. No network requests are made here.
 const dataService = {
   async calculate(file) {
-    if (!file) throw new Error("Файл не выбран");
+    if (!file) throw new Error("Missing file");
     await delay(1100);
     return MOCK_PRODUCTS.map((product) => ({ ...product, warnings: [...product.warnings] }));
   },
@@ -41,13 +204,73 @@ const dataService = {
   },
 };
 
-function showNotification(message, type = "success") {
+function setLanguage(language) {
+  state.language = Object.hasOwn(translations, language) ? language : "ru";
+  savePreference("zakupai.language", state.language);
+  document.documentElement.lang = state.language === "kz" ? "kk" : state.language;
+  document.title = `ЗакупAI — ${t("title")}`;
+  $("language").value = state.language;
+  document.querySelectorAll("[data-i18n]").forEach((node) => { node.textContent = t(node.dataset.i18n); });
+  for (const [attribute, dataset] of [["placeholder", "i18nPlaceholder"], ["aria-label", "i18nAria"], ["title", "i18nTitle"]]) {
+    document.querySelectorAll(`[data-${dataset.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}]`).forEach((node) => node.setAttribute(attribute, t(node.dataset[dataset])));
+  }
+  populateSupplierFilter();
+  renderUpload();
+  renderRecommendations();
+  renderChat();
+  updateSidebarLabel();
+  if ($("product-dialog").open && state.activeSku) renderProductDetails();
+  document.querySelectorAll(".toast").forEach((toast) => {
+    toast.querySelector(".toast-text").textContent = t(toast.dataset.key, JSON.parse(toast.dataset.params));
+  });
+}
+
+function showNotification(key, type = "success", params = {}) {
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
-  toast.textContent = message;
+  toast.dataset.key = key;
+  toast.dataset.params = JSON.stringify(params);
+  const icon = document.createElement("span");
+  icon.className = "toast-symbol";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = type === "error" ? "!" : "✓";
+  const text = document.createElement("span");
+  text.className = "toast-text";
+  text.textContent = t(key, params);
+  toast.append(icon, text);
   $("notifications").append(toast);
-  while ($("notifications").children.length > 4) $("notifications").firstElementChild.remove();
-  setTimeout(() => toast.remove(), 5000);
+  // Keep the latest result visible without stacking messages over the workspace.
+  while ($("notifications").children.length > 1) $("notifications").firstElementChild.remove();
+  setTimeout(() => toast.remove(), 4500);
+}
+
+function renderUpload() {
+  const complete = state.status === "complete";
+  $("upload").classList.toggle("is-complete", complete);
+  $("upload-title").textContent = t(complete ? "uploadedTitle" : "uploadTitle");
+  $("upload-prompt").hidden = !!state.file;
+  $("file-card").hidden = !state.file;
+  $("drop-zone").classList.toggle("has-file", !!state.file);
+  $("drop-zone").classList.toggle("error", state.fileError);
+  $("file-name").textContent = state.file?.name ?? "";
+  $("file-status").textContent = state.file ? t(complete ? "fileProcessed" : "fileReady") : "";
+  $("choose-file").textContent = t(state.file ? "replaceFile" : "chooseFile");
+  $("upload-error").hidden = !state.fileError;
+  $("upload-error").textContent = state.fileError ? t("invalidFormat") : "";
+  $("calculate-label").textContent = t(state.calculating ? "calculating" : "calculate");
+  $("calculate").querySelector(".spinner").hidden = !state.calculating;
+  $("calculation-status").textContent = state.status === "error" ? t("calculationError") : state.calculating ? t("loadingText") : "";
+  $("system-status").textContent = t(state.calculating ? "calculating" : "ready");
+  $("recommendations").setAttribute("aria-busy", String(state.calculating));
+  for (const id of ["calculate", "choose-file", "remove-file", "file-input", "export"]) $(id).disabled = state.calculating;
+  const stepIndex = state.exported ? 2 : complete ? 1 : 0;
+  ["step-upload", "step-review", "step-export"].forEach((id, index) => {
+    $(id).classList.toggle("current", index === stepIndex);
+    $(id).classList.toggle("complete", index < stepIndex);
+    $(id).querySelector("b").textContent = index < stepIndex ? "✓" : String(index + 1);
+    if (index === stepIndex) $(id).setAttribute("aria-current", "step");
+    else $(id).removeAttribute("aria-current");
+  });
 }
 
 function resetFilters() {
@@ -57,72 +280,70 @@ function resetFilters() {
   renderRecommendations();
 }
 
-function handleFileSelect(file) {
-  if (!file || state.calculating) return;
+function resetDataset() {
   state.revision += 1;
-  state.file = null;
   state.products = [];
-  $("drop-zone").classList.remove("success", "error");
-  $("step-review").classList.remove("current");
-  $("step-export").classList.remove("current");
-  $("step-upload").classList.add("current");
+  state.exported = false;
+  state.status = "idle";
+  state.activeSku = null;
+  setActiveNavigation("#upload");
   populateSupplierFilter();
   resetFilters();
   updateStatistics();
-  if (!/\.(xlsx|xls)$/i.test(file.name)) {
-    $("file-input").value = "";
-    $("drop-zone").classList.add("error");
-    $("file-status").textContent = "Неподдерживаемый формат файла. Выберите .xlsx или .xls.";
-    $("calculation-status").textContent = "Выберите Excel-файл, чтобы продолжить";
-    showNotification("Неподдерживаемый формат файла", "error");
-    return;
-  }
-  state.file = file;
-  $("drop-zone").classList.add("success");
-  $("file-status").textContent = `✓ ${file.name} · файл выбран`;
-  $("calculation-status").textContent = "Файл готов. Можно рассчитать рекомендации.";
-  showNotification("Файл успешно выбран");
+}
+
+function handleFileSelect(file) {
+  if (!file || state.calculating) return;
+  resetDataset();
+  state.fileError = !/\.(xlsx|xls)$/i.test(file.name);
+  state.file = state.fileError ? null : file;
+  $("file-input").value = ""; // Selecting the same file again must fire change.
+  renderUpload();
+  showNotification(state.fileError ? "invalidFormat" : "fileSelected", state.fileError ? "error" : "success");
+}
+
+function removeFile() {
+  if (state.calculating) return;
+  state.file = null;
+  state.fileError = false;
+  $("file-input").value = "";
+  resetDataset();
+  renderUpload();
+  showNotification("fileRemoved");
+  $("choose-file").focus();
 }
 
 async function calculateRecommendations() {
   if (state.calculating) return;
   if (!state.file) {
-    showNotification("Сначала выберите Excel-файл", "error");
+    showNotification("selectFirst", "error");
     $("choose-file").focus();
     return;
   }
+  resetDataset();
   state.calculating = true;
-  state.revision += 1;
-  state.products = [];
-  populateSupplierFilter();
-  resetFilters();
-  updateStatistics();
-  for (const id of ["calculate", "choose-file", "file-input", "export"]) $(id).disabled = true;
-  $("calculate").textContent = "Выполняется расчёт…";
-  $("calculation-status").textContent = "Подготавливаем демонстрационные рекомендации…";
-  $("system-status").textContent = "Выполняется расчёт";
-  $("recommendations").setAttribute("aria-busy", "true");
+  state.status = "loading";
+  renderUpload();
+  renderRecommendations();
   try {
     state.products = await dataService.calculate(state.file);
+    state.status = "complete";
     populateSupplierFilter();
-    renderRecommendations();
     updateStatistics();
-    $("step-upload").classList.remove("current");
-    $("step-review").classList.add("current");
-    $("step-export").classList.remove("current");
-    $("calculation-status").textContent = "✓ Рекомендации успешно рассчитаны · тестовые данные";
-    showNotification("Рекомендации успешно рассчитаны");
-    $("recommendations").scrollIntoView({ behavior: "smooth", block: "start" });
-  } catch (error) {
-    $("calculation-status").textContent = "Не удалось получить рекомендации. Попробуйте ещё раз.";
-    showNotification("Ошибка расчёта. Попробуйте ещё раз.", "error");
+    showNotification("calculationDone");
+  } catch {
+    state.status = "error";
+    showNotification("calculationError", "error");
   } finally {
     state.calculating = false;
-    for (const id of ["calculate", "choose-file", "file-input", "export"]) $(id).disabled = false;
-    $("calculate").textContent = "✧ Рассчитать рекомендации";
-    $("system-status").textContent = "Система готова";
-    $("recommendations").setAttribute("aria-busy", "false");
+    renderUpload();
     renderRecommendations();
+    if (state.status === "complete") {
+      setActiveNavigation("#recommendations");
+      $("recommendations").scrollIntoView({ behavior: "auto", block: "start" });
+      // Calculate is now hidden: move keyboard focus to the next task.
+      $("search").focus({ preventScroll: true });
+    }
   }
 }
 
@@ -136,146 +357,216 @@ function updateStatistics() {
 function populateSupplierFilter() {
   const select = $("supplier-filter");
   const previous = select.value;
-  select.replaceChildren(new Option("Все поставщики", ""));
+  select.replaceChildren(new Option(t("allSuppliers"), ""));
   [...new Set(state.products.map((p) => p.supplier))].forEach((supplier) => select.add(new Option(supplier, supplier)));
   if ([...select.options].some((option) => option.value === previous)) select.value = previous;
 }
 
 function applyFilters() {
   const query = normalize($("search").value);
-  return state.products.filter((p) =>
-    (!$("supplier-filter").value || p.supplier === $("supplier-filter").value) &&
-    (!$("urgency-filter").value || p.urgency === $("urgency-filter").value) &&
-    (!query || [p.sku, p.name, p.supplier].some((value) => normalize(value).includes(query)))
-  );
+  return state.products.filter((p) => {
+    // Search every locale so switching language doesn't invalidate a query.
+    const names = Object.keys(translations).map((language) => localizedProduct(p, language).name);
+    return (!$("supplier-filter").value || p.supplier === $("supplier-filter").value) &&
+      (!$("urgency-filter").value || p.urgency === $("urgency-filter").value) &&
+      (!query || [p.sku, p.name, p.supplier, ...names].some((value) => normalize(value).includes(query)));
+  });
 }
 
 function urgencyBadge(urgency) {
-  const level = Object.hasOwn(URGENCY, urgency) ? urgency : "low";
-  return `<span class="badge ${level}"><span aria-hidden="true">${{ high: "↑", medium: "–", low: "↓" }[level]}</span>${URGENCY[level]}</span>`;
+  const level = ["high", "medium", "low"].includes(urgency) ? urgency : "low";
+  return `<span class="badge ${level}"><span aria-hidden="true">${{ high: "↑", medium: "–", low: "↓" }[level]}</span>${t(level)}</span>`;
 }
 
 function renderRecommendations() {
   const products = applyFilters();
-  $("recommendation-rows").innerHTML = products.map((p) => `<tr>
-    <td>${escapeHTML(p.sku)}</td><td>${escapeHTML(p.name)}</td><td>${escapeHTML(p.supplier)}</td>
-    <td>${escapeHTML(p.stock)}</td><td>${escapeHTML(p.incoming_in_period)}</td><td>${escapeHTML(p.forecast_demand)}</td><td>${escapeHTML(p.safety_stock)}</td>
-    <td><span class="${p.recommended_qty > 0 ? "quantity" : ""}">${escapeHTML(p.recommended_qty)}</span></td><td>${escapeHTML(p.unit)}</td>
-    <td>${urgencyBadge(p.urgency)}</td><td><button class="details-button" type="button" data-sku="${escapeHTML(p.sku)}" aria-label="Подробнее о ${escapeHTML(p.name)}">Подробнее →</button></td></tr>`).join("");
+  const hasData = state.products.length > 0;
+  $("recommendation-rows").innerHTML = products.map((raw) => {
+    const p = localizedProduct(raw);
+    return `<tr><td>${escapeHTML(p.sku)}</td><td class="product-name">${escapeHTML(p.name)}</td><td class="supplier-name">${escapeHTML(p.supplier)}</td>
+      <td class="numeric">${p.stock}<span class="unit">${escapeHTML(p.unit)}</span></td>
+      <td class="numeric"><span class="${p.recommended_qty > 0 ? "quantity" : ""}">${p.recommended_qty}</span><span class="unit">${escapeHTML(p.unit)}</span></td>
+      <td>${urgencyBadge(p.urgency)}</td><td><button class="details-button" type="button" data-sku="${escapeHTML(p.sku)}" aria-label="${escapeHTML(t("detailsFor", { name: p.name }))}">${t("details")} <span aria-hidden="true">↗</span></button></td></tr>`;
+  }).join("");
+  for (const id of ["filters", "export", "result-count", "table-footer"]) $(id).hidden = !hasData;
+  $("table-scroll").hidden = !products.length;
   $("result-count").textContent = products.length;
   $("empty-state").hidden = products.length > 0;
-  const title = state.calculating ? "Подготавливаем рекомендации…" : state.products.length ? "Ничего не найдено" : "Здесь появится ваш план закупок";
-  const description = state.calculating ? "Это займёт несколько секунд." : state.products.length ? "Измените условия поиска или сбросьте фильтры." : "Загрузите Excel-файл и рассчитайте рекомендации.";
-  $("empty-state").querySelector("h3").textContent = title;
-  $("empty-state").querySelector("p").textContent = description;
-  $("table-summary").textContent = state.products.length ? `Показано ${products.length} из ${state.products.length} · К заказу: ${products.filter((p) => p.recommended_qty > 0).length}` : "Данные ещё не загружены";
+  $("empty-state").querySelector("h3").textContent = t(state.calculating ? "loadingTitle" : hasData ? "noResults" : "emptyTitle");
+  $("empty-state").querySelector("p").textContent = t(state.calculating ? "loadingText" : hasData ? "noResultsText" : "emptyText");
+  $("table-summary").textContent = t("summary", { count: products.length, total: state.products.length, orders: products.filter((p) => p.recommended_qty > 0).length });
+}
+
+function renderProductDetails() {
+  const raw = state.products.find((p) => p.sku === state.activeSku);
+  if (!raw) return;
+  const p = localizedProduct(raw);
+  const metrics = [["stock", p.stock], ["incoming", p.incoming_in_period], ["forecast", p.forecast_demand], ["safety", p.safety_stock], ["recommended", p.recommended_qty]];
+  // Explanatory arithmetic only. Never generates or changes recommended_qty.
+  const baseNeed = p.forecast_demand + p.safety_stock - p.stock - p.incoming_in_period;
+  const formula = [["forecast", p.forecast_demand, ""], ["safety", p.safety_stock, "+"], ["stock", p.stock, "−"], ["incoming", p.incoming_in_period, "−"], ["baseNeed", baseNeed, "="]];
+  $("product-details").innerHTML = `<h2 id="product-title">${escapeHTML(p.name)}</h2>
+    <p class="product-subtitle">${escapeHTML(p.sku)} · ${escapeHTML(p.supplier)}</p>${urgencyBadge(p.urgency)}
+    <dl class="detail-grid">${metrics.map(([label, value]) => `<div><dt>${t(label)}</dt><dd>${value} <span class="unit">${escapeHTML(p.unit)}</span></dd></div>`).join("")}</dl>
+    <h3>${t("reasonTitle")}</h3><p class="detail-copy">${escapeHTML(p.reason)}</p>
+    <div class="explanation"><h3>${t("baseExplanation")}</h3><dl class="formula-rows">${formula.map(([label, value, sign]) => `<div><dt>${sign} ${t(label)}</dt><dd>${value} ${escapeHTML(p.unit)}</dd></div>`).join("")}</dl>
+    ${baseNeed < 0 ? `<p>${t("negativeNeed")}</p>` : ""}<p>${t("businessRules")}</p></div>
+    <h3>${t("warnings")}</h3>${p.warnings.length ? `<ul class="warnings">${p.warnings.map((warning) => `<li>${escapeHTML(warning)}</li>`).join("")}</ul>` : `<p class="detail-copy">${t("noWarnings")}</p>`}`;
 }
 
 function openProductDetails(sku) {
-  const p = state.products.find((product) => product.sku === sku);
-  if (!p) return;
-  const metrics = [["Текущий остаток", p.stock], ["Товар в пути", p.incoming_in_period], ["Прогноз спроса", p.forecast_demand], ["Страховой запас", p.safety_stock], ["Рекомендуемое количество", p.recommended_qty]];
-  // Explanatory arithmetic only; never used to produce recommended_qty.
-  const baseNeed = p.forecast_demand + p.safety_stock - p.stock - p.incoming_in_period;
-  $("product-details").innerHTML = `<h2 id="product-title">${escapeHTML(p.name)}</h2>
-    <p class="product-subtitle">${escapeHTML(p.sku)} · ${escapeHTML(p.supplier)} · Единица: ${escapeHTML(p.unit)}</p>${urgencyBadge(p.urgency)}
-    <dl class="detail-grid">${metrics.map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHTML(value)} ${escapeHTML(p.unit)}</dd></div>`).join("")}</dl>
-    <h3>Причина рекомендации</h3><p class="detail-copy">${escapeHTML(p.reason)}</p>
-    <div class="explanation"><h3>Объяснение базовой потребности</h3><p>Прогноз спроса + Страховой запас − Текущий остаток − Товар в пути = Базовая потребность</p><p class="formula">${p.forecast_demand} + ${p.safety_stock} − ${p.stock} − ${p.incoming_in_period} = ${baseNeed} ${escapeHTML(p.unit)}</p><p>${baseNeed < 0 ? "Отрицательная базовая потребность означает избыток запаса; заказ не требуется. " : ""}Финальное значение в будущем может учитывать дополнительные бизнес-правила backend, например MOQ (минимальный объём заказа).</p></div>
-    <h3>Предупреждения</h3>${p.warnings.length ? `<ul class="warnings">${p.warnings.map((warning) => `<li>${escapeHTML(warning)}</li>`).join("")}</ul>` : '<p class="detail-copy">Предупреждений нет.</p>'}`;
+  if (!state.products.some((p) => p.sku === sku)) return;
+  state.activeSku = sku;
+  renderProductDetails();
   $("product-dialog").showModal();
 }
 
+// Structured mock replies can be re-rendered on language changes. User text is
+// kept verbatim; product snapshots preserve the historical recommendation.
 function getMockChatResponse(question, products) {
-  if (!products.length) return "Сначала загрузите Excel-файл и выполните расчёт. После этого я смогу объяснить рекомендации.";
+  if (!products.length) return { kind: "needData" };
   const query = normalize(question);
-  const product = products.find((p) => query.includes(normalize(p.sku)) || query.includes(normalize(p.name)));
-  if (product) {
-    const p = product;
-    return `${p.name} (${p.sku}): прогноз спроса — ${p.forecast_demand} ${p.unit}, текущий остаток — ${p.stock} ${p.unit}, товар в пути — ${p.incoming_in_period} ${p.unit}, страховой запас — ${p.safety_stock} ${p.unit}.\n\n${p.recommended_qty > 0 ? `Рекомендуется заказать ${p.recommended_qty} ${p.unit}.` : "Заказ не требуется: рекомендованное количество — 0."} ${p.reason}${p.warnings.length ? `\n\nОбратите внимание: ${p.warnings.join(" ")}` : ""}`;
-  }
-  if (/сроч|приоритет/.test(query)) {
-    const urgent = products.filter((p) => p.urgency === "high");
-    return urgent.length ? `Высокий приоритет у следующих позиций:\n${urgent.map((p) => `• ${p.sku} — ${p.name}: ${p.recommended_qty} ${p.unit}, поставщик ${p.supplier}.`).join("\n")}\n\nПроверьте сроки поставки перед формированием заказа.` : "В текущих рекомендациях нет позиций с высокой срочностью.";
-  }
-  return "Я могу объяснить рекомендацию по SKU или полному названию товара, а также показать срочные позиции. Например: «Почему нужно заказать TEST-001?» или «Какие позиции самые срочные?»";
+  const product = products.find((p) => query.includes(normalize(p.sku)) ||
+    Object.keys(translations).some((language) => query.includes(normalize(localizedProduct(p, language).name))));
+  if (product) return { kind: "product", product };
+  if (/сроч|приоритет|шұғыл|басым|urgent|priorit/.test(query)) return { kind: "urgent", products: products.filter((p) => p.urgency === "high") };
+  if (Object.keys(translations).some((language) => query === normalize(t("quickWhy", {}, language)))) return { kind: "overview", products };
+  return { kind: "chatFallback" };
 }
 
-function appendChatMessage(text, role) {
-  const message = document.createElement("div");
-  message.className = `message ${role}`;
-  const label = document.createElement("span");
-  label.className = "message-label";
-  label.textContent = role === "user" ? "Вы" : "ЗакупAI · демо";
-  const content = document.createElement("p");
-  content.textContent = text;
-  message.append(label, content);
-  $("chat-messages").append(message);
-  $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
-  return message;
+function chatMessageText(message) {
+  if (message.role === "user") return message.text;
+  if (message.kind === "greeting") return t(state.products.length ? "greetingReady" : "greeting");
+  if (message.kind === "product") {
+    const p = localizedProduct(message.product);
+    return `${t("chatProduct", { name: p.name, sku: p.sku, forecast: p.forecast_demand, stock: p.stock, incoming: p.incoming_in_period, safety: p.safety_stock, unit: p.unit })}\n\n${p.recommended_qty > 0 ? t("chatOrder", { quantity: p.recommended_qty, unit: p.unit }) : t("chatNoOrder")} ${p.reason}${p.warnings.length ? `\n\n${t("warnings")}: ${p.warnings.join(" ")}` : ""}`;
+  }
+  if (message.kind === "urgent") {
+    if (!message.products.length) return t("chatNoUrgent");
+    return `${t("chatUrgent")}\n${message.products.map((raw) => {
+      const p = localizedProduct(raw);
+      return t("chatUrgentItem", { ...p, quantity: p.recommended_qty });
+    }).join("\n")}\n\n${t("chatUrgentEnd")}`;
+  }
+  if (message.kind === "overview") return t("chatOverview", { total: message.products.length, orders: message.products.filter((p) => p.recommended_qty > 0).length, urgent: message.products.filter((p) => p.urgency === "high").length });
+  return t(message.kind);
+}
+
+function renderChat() {
+  const log = $("chat-messages");
+  log.replaceChildren();
+  state.messages.forEach((message) => {
+    const node = document.createElement("div");
+    node.className = `message ${message.role}`;
+    const label = document.createElement("span");
+    label.className = "message-label";
+    label.textContent = t(message.role === "user" ? "you" : "aiName");
+    const content = document.createElement("p");
+    content.textContent = chatMessageText(message);
+    node.append(label, content);
+    log.append(node);
+  });
+  log.scrollTop = log.scrollHeight;
+  $("send-chat").disabled = state.chatting;
+  document.querySelectorAll("[data-question]").forEach((button) => { button.disabled = state.chatting; });
 }
 
 async function sendChatMessage(event) {
-  event.preventDefault();
+  event?.preventDefault();
   const question = $("chat-input").value.trim();
   if (!question || state.chatting) return;
   state.chatting = true;
   const revision = state.revision;
-  $("send-chat").disabled = true;
-  appendChatMessage(question, "user");
+  state.messages.push({ role: "user", text: question });
+  const pending = { role: "assistant", kind: "thinking" };
+  state.messages.push(pending);
   $("chat-input").value = "";
-  const pending = appendChatMessage("Готовлю объяснение…", "assistant");
+  renderChat();
   try {
     const response = await dataService.chat(question, state.products);
-    pending.remove();
-    appendChatMessage(revision === state.revision ? response : "Набор данных изменился. Задайте вопрос повторно после завершения расчёта.", "assistant");
-  } catch (error) {
-    pending.remove();
-    appendChatMessage("Не удалось подготовить ответ. Попробуйте отправить вопрос ещё раз.", "assistant");
+    Object.assign(pending, revision === state.revision ? response : { kind: "changedData" });
+  } catch {
+    pending.kind = "chatError";
   } finally {
     state.chatting = false;
-    $("send-chat").disabled = false;
+    renderChat();
   }
+}
+
+function openAssistant() {
+  renderChat();
+  if (!$("assistant").open) $("assistant").showModal();
+  $("chat-input").focus();
 }
 
 function csvCell(value) {
   let text = String(value);
-  // Protect spreadsheet users from formula interpretation of future API strings.
-  if (/^[\s]*[=+@-]/.test(text)) text = `'${text}`;
+  if (/^\s*[=+@-]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
 function buildOrderCSV(products) {
-  const rows = [["SKU", "Товар", "Поставщик", "Рекомендованное количество", "Единица", "Срочность"], ...products.map((p) => [p.sku, p.name, p.supplier, p.recommended_qty, p.unit, URGENCY[p.urgency]])];
-  // UTF-8 BOM preserves Cyrillic in Excel; semicolon suits Russian locales.
+  const rows = [["SKU", t("product"), t("supplier"), t("exportQuantity"), t("unitHeader"), t("urgency")], ...products.map((raw) => {
+    const p = localizedProduct(raw);
+    return [p.sku, p.name, p.supplier, p.recommended_qty, p.unit, t(p.urgency)];
+  })];
+  // UTF-8 BOM for Excel; quote fields and preserve Cyrillic / Kazakh text.
   return "\uFEFF" + rows.map((row) => row.map(csvCell).join(";")).join("\r\n");
 }
 
 function exportOrder() {
   const products = applyFilters().filter((p) => p.recommended_qty > 0);
-  if (!products.length) return showNotification("Нет данных для экспорта", "error");
-  // Replace with GET /api/export with the same filter parameters in production.
-  const url = URL.createObjectURL(new Blob([buildOrderCSV(products)], { type: "text/csv;charset=utf-8;" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "zakupai_order.csv";
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  $("step-review").classList.remove("current");
-  $("step-export").classList.add("current");
-  showNotification(`Заказ сформирован: ${products.length} позиций`);
+  if (!products.length) return showNotification("noExport", "error");
+  // Future GET /api/export must receive the same active filter parameters.
+  let url;
+  let link;
+  try {
+    url = URL.createObjectURL(new Blob([buildOrderCSV(products)], { type: "text/csv;charset=utf-8;" }));
+    link = document.createElement("a");
+    link.href = url;
+    link.download = "zakupai_order.csv";
+    document.body.append(link);
+    link.click();
+    state.exported = true;
+    renderUpload();
+    showNotification("exportDone", "success", { count: products.length });
+  } catch {
+    showNotification("exportError", "error");
+  } finally {
+    link?.remove();
+    if (url) setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 }
 
-$("choose-file").addEventListener("click", () => $("file-input").click());
-$("file-input").addEventListener("change", (event) => handleFileSelect(event.target.files[0]));
-for (const eventName of ["dragenter", "dragover"]) {
-  $("drop-zone").addEventListener(eventName, (event) => {
-    event.preventDefault();
-    if (!state.calculating) $("drop-zone").classList.add("drag-over");
+function setActiveNavigation(hash) {
+  document.querySelectorAll(".nav-link[href]").forEach((link) => {
+    const active = link.getAttribute("href") === hash;
+    link.classList.toggle("active", active);
+    if (active) link.setAttribute("aria-current", "location");
+    else link.removeAttribute("aria-current");
   });
 }
+function updateSidebarLabel() {
+  const collapsed = document.body.classList.contains("sidebar-collapsed");
+  $("sidebar-toggle").setAttribute("aria-expanded", String(!collapsed));
+  $("sidebar-toggle").setAttribute("aria-label", t(collapsed ? "expand" : "collapse"));
+  $("sidebar-toggle").title = t(collapsed ? "expand" : "collapse");
+}
+
+// Native dialogs provide focus trapping, Escape and focus restoration.
+$("language").addEventListener("change", (event) => setLanguage(event.target.value));
+$("sidebar-toggle").addEventListener("click", () => {
+  document.body.classList.toggle("sidebar-collapsed");
+  savePreference("zakupai.sidebarCollapsed", String(document.body.classList.contains("sidebar-collapsed")));
+  updateSidebarLabel();
+});
+$("choose-file").addEventListener("click", () => $("file-input").click());
+$("remove-file").addEventListener("click", removeFile);
+$("file-input").addEventListener("change", (event) => handleFileSelect(event.target.files[0]));
+for (const name of ["dragenter", "dragover"]) $("drop-zone").addEventListener(name, (event) => {
+  event.preventDefault();
+  if (!state.calculating) $("drop-zone").classList.add("drag-over");
+});
 $("drop-zone").addEventListener("dragleave", (event) => {
   if (!$("drop-zone").contains(event.relatedTarget)) $("drop-zone").classList.remove("drag-over");
 });
@@ -283,11 +574,12 @@ $("drop-zone").addEventListener("drop", (event) => {
   event.preventDefault();
   $("drop-zone").classList.remove("drag-over");
   if (state.calculating) return;
-  if (event.dataTransfer.files.length !== 1) return showNotification("Выберите один Excel-файл", "error");
+  if (event.dataTransfer.files.length !== 1) return showNotification("oneFile", "error");
   handleFileSelect(event.dataTransfer.files[0]);
 });
-// Prevent accidental navigation when a file is dropped outside the upload area.
-for (const eventName of ["dragover", "drop"]) document.addEventListener(eventName, (event) => event.preventDefault());
+for (const name of ["dragover", "drop"]) document.addEventListener(name, (event) => {
+  if ([...event.dataTransfer.types].includes("Files")) event.preventDefault();
+});
 $("calculate").addEventListener("click", calculateRecommendations);
 $("export").addEventListener("click", exportOrder);
 $("search").addEventListener("input", renderRecommendations);
@@ -299,22 +591,34 @@ $("recommendation-rows").addEventListener("click", (event) => {
   if (button) openProductDetails(button.dataset.sku);
 });
 $("close-dialog").addEventListener("click", () => $("product-dialog").close());
-$("product-dialog").addEventListener("click", (event) => {
-  const rect = $("product-dialog").getBoundingClientRect();
-  if (event.target === $("product-dialog") && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) $("product-dialog").close();
+$("close-assistant").addEventListener("click", () => $("assistant").close());
+for (const id of ["product-dialog", "assistant"]) $(id).addEventListener("click", (event) => {
+  const rect = $(id).getBoundingClientRect();
+  if (event.target === $(id) && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) $(id).close();
 });
+$("product-ask").addEventListener("click", () => {
+  const sku = state.activeSku;
+  $("product-dialog").close();
+  openAssistant();
+  $("chat-input").value = sku;
+  sendChatMessage();
+});
+$("open-assistant").addEventListener("click", openAssistant);
+$("nav-assistant").addEventListener("click", openAssistant);
 $("chat-form").addEventListener("submit", sendChatMessage);
+$("chat-input").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && event.isComposing) event.preventDefault();
+});
 document.querySelectorAll("[data-question]").forEach((button) => button.addEventListener("click", () => {
-  $("chat-input").value = button.dataset.question;
+  const key = { why: "quickWhy", urgent: "quickUrgent", product: "quickProduct" }[button.dataset.question];
+  $("chat-input").value = t(key);
+  sendChatMessage();
   $("chat-input").focus();
 }));
-document.querySelectorAll(".nav-link").forEach((link) => link.addEventListener("click", () => {
-  document.querySelectorAll(".nav-link").forEach((item) => {
-    item.classList.toggle("active", item === link);
-    if (item === link) item.setAttribute("aria-current", "location");
-    else item.removeAttribute("aria-current");
-  });
-}));
-populateSupplierFilter();
+document.querySelectorAll(".nav-link[href]").forEach((link) => link.addEventListener("click", () => setActiveNavigation(link.getAttribute("href"))));
+$("assistant").addEventListener("close", () => $("nav-assistant").classList.remove("active"));
+$("assistant").addEventListener("toggle", () => $("nav-assistant").classList.toggle("active", $("assistant").open));
+
+if (readPreference("zakupai.sidebarCollapsed") === "true") document.body.classList.add("sidebar-collapsed");
 updateStatistics();
-renderRecommendations();
+setLanguage(readPreference("zakupai.language") || "ru");
