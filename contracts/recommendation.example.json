@@ -1,0 +1,59 @@
+{
+  "recommendations": [
+    {
+      "sku": "000123",
+      "name": "Демонстрационный товар",
+      "supplier": "ИЭК",
+      "unit": "шт",
+      "stock": 10.0,
+      "incoming_in_period": 5.0,
+      "forecast_demand": 42.0,
+      "safety_stock": 20.0,
+      "moq": 12.0,
+      "order_multiple": 6.0,
+      "recommended_qty": 48.0,
+      "urgency": "high",
+      "reason": "ДЕМО: спрос 42 + запас 20 − остаток 10 − поставки 5; положительная потребность округлена до MOQ и кратности. Синтетический спрос 2 шт/день.",
+      "warnings": [
+        "ДЕМО: синтетические товары и спрос; содержимое загруженных Excel не участвует в расчёте."
+      ]
+    },
+    {
+      "sku": "000456",
+      "name": "Демонстрационный товар",
+      "supplier": "SystemElectric",
+      "unit": "шт",
+      "stock": 8.0,
+      "incoming_in_period": 0.0,
+      "forecast_demand": 21.0,
+      "safety_stock": 10.0,
+      "moq": 5.0,
+      "order_multiple": 1.0,
+      "recommended_qty": 23.0,
+      "urgency": "high",
+      "reason": "ДЕМО: спрос 21 + запас 10 − остаток 8 − поставки 0; положительная потребность округлена до MOQ и кратности. Синтетический спрос 1 шт/день.",
+      "warnings": [
+        "ДЕМО: синтетические товары и спрос; содержимое загруженных Excel не участвует в расчёте."
+      ]
+    }
+  ],
+  "forecast_start": "2026-09-23",
+  "forecast_end": "2026-10-14",
+  "warnings": [
+    "ДЕМО: синтетические товары и спрос; содержимое загруженных Excel не участвует в расчёте."
+  ],
+  "calculation_id": "22222222-2222-4222-8222-222222222222",
+  "dataset_id": "11111111-1111-4111-8111-111111111111",
+  "created_at": "2026-09-23T00:00:00Z",
+  "demo": true,
+  "provider": "demo-v1",
+  "parameters": {
+    "calculation_date": "2026-09-23",
+    "supplier": null,
+    "lead_time_days": 7,
+    "review_period_days": 14,
+    "safety_stock_days": 10,
+    "demand_growth_adjustment": null
+  },
+  "sources": []
+}
